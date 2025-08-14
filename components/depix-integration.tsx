@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Edit2, Check, X } from "lucide-react"
+import QRCode from "qrcode"
 
 export function DepixIntegration() {
   const [amountInReais, setAmountInReais] = useState("")
@@ -20,8 +21,26 @@ export function DepixIntegration() {
   const [depositId, setDepositId] = useState<string | null>(null)
   const [isEditingDepositId, setIsEditingDepositId] = useState(false)
   const [customDepositId, setCustomDepositId] = useState<string>("")
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null)
 
   const requestBody = { amountInCents: Math.round((Number(amountInReais) || 0) * 100) }
+
+  const generateQRCode = async (text: string) => {
+    try {
+      const dataUrl = await QRCode.toDataURL(text, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: "#000000",
+          light: "#FFFFFF",
+        },
+      })
+      setQrCodeDataUrl(dataUrl)
+    } catch (err) {
+      console.error("Failed to generate QR code:", err)
+      setQrCodeDataUrl(null)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,6 +50,7 @@ export function DepixIntegration() {
     setDepositId(null)
     setStatusResponse(null)
     setStatusError(null)
+    setQrCodeDataUrl(null)
 
     try {
       const res = await fetch("/api/depix", {
@@ -67,6 +87,10 @@ export function DepixIntegration() {
       if (data.response?.id) {
         setDepositId(data.response.id)
         console.log("Deposit ID extracted:", data.response.id)
+      }
+
+      if (data.response?.qrCopyPaste) {
+        await generateQRCode(data.response.qrCopyPaste)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
@@ -136,9 +160,9 @@ export function DepixIntegration() {
   return (
     <Card className="w-full max-w-2xl">
       <CardHeader>
-        <CardTitle>DePix Deposit</CardTitle>
+        <CardTitle>Pix Deposit</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Deposit DePix quickly and securely using PIX payments. Enter your amount and get instant payment instructions.
+          Deposit Pix quickly and securely using PIX payments. Enter your amount and get instant payment instructions.
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -226,7 +250,7 @@ export function DepixIntegration() {
 
         {response && response.data && (
           <>
-            {response.data.response?.qrImageUrl && (
+            {response.data.response?.qrCopyPaste && qrCodeDataUrl && (
               <div>
                 <label className="text-sm font-medium">📱 Scan to Pay with PIX</label>
                 <Alert className="mt-1">
@@ -237,18 +261,9 @@ export function DepixIntegration() {
                       </p>
                       <div className="flex flex-col items-center space-y-2">
                         <img
-                          src={response.data.response.qrImageUrl || "/placeholder.svg"}
+                          src={qrCodeDataUrl || "/placeholder.svg"}
                           alt="PIX QR Code for Payment"
                           className="max-w-xs border rounded"
-                          onLoad={() => console.log("QR image loaded successfully")}
-                          onError={(e) => {
-                            console.error("Failed to load QR image:", response.data.response.qrImageUrl)
-                            e.currentTarget.style.display = "none"
-                            const errorDiv = document.createElement("div")
-                            errorDiv.textContent = `Unable to load payment QR code. Please try again.`
-                            errorDiv.className = "text-red-500 text-sm p-2 border border-red-200 rounded"
-                            e.currentTarget.parentNode?.appendChild(errorDiv)
-                          }}
                         />
                       </div>
                     </div>
@@ -325,7 +340,7 @@ export function DepixIntegration() {
                 <label className="text-sm font-medium">💳 Payment Status</label>
                 <Alert
                   className={`mt-1 ${
-                    statusResponse.data.response.status === "depix_sent"
+                    statusResponse.data.response.status === "pix_sent"
                       ? "border-green-500 bg-green-50"
                       : statusResponse.data.response.status === "pending"
                         ? "border-yellow-500 bg-yellow-50"
@@ -334,7 +349,7 @@ export function DepixIntegration() {
                 >
                   <AlertDescription>
                     <div className="space-y-2">
-                      {statusResponse.data.response.status === "depix_sent" && (
+                      {statusResponse.data.response.status === "pix_sent" && (
                         <div className="flex items-center space-x-2">
                           <div className="text-green-600 font-medium">🎉 Payment Completed!</div>
                           <div className="text-green-700">
@@ -350,7 +365,7 @@ export function DepixIntegration() {
                           </div>
                         </div>
                       )}
-                      {statusResponse.data.response.status !== "depix_sent" &&
+                      {statusResponse.data.response.status !== "pix_sent" &&
                         statusResponse.data.response.status !== "pending" && (
                           <div className="flex items-center space-x-2">
                             <div className="text-gray-600 font-medium">ℹ️ Status:</div>
