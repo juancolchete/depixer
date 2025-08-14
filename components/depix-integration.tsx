@@ -113,7 +113,7 @@ export function DepixIntegration() {
       const data = await res.json()
 
       if (!res.ok) {
-        throw new Error(data.error || `Status check failed with status ${res.status}`)
+        throw new Error(data.error || `Unable to check deposit status. Please try again.`)
       }
 
       const statusResponseData = {
@@ -136,14 +136,14 @@ export function DepixIntegration() {
   return (
     <Card className="w-full max-w-2xl">
       <CardHeader>
-        <CardTitle>Depix API Integration</CardTitle>
-        <CardDescription>Test the Depix API integration</CardDescription>
+        <CardTitle>DePix Deposit</CardTitle>
+        <CardDescription>Buy DePix quickly and securely with PIX payments</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="amount" className="text-sm font-medium">
-              Amount (in reais)
+              💵 Deposit Amount (R$)
             </label>
             <Input
               id="amount"
@@ -151,27 +151,27 @@ export function DepixIntegration() {
               step="0.01"
               value={amountInReais}
               onChange={(e) => setAmountInReais(Number(e.target.value))}
-              placeholder="1.00"
+              placeholder="10.00"
               min="0.01"
             />
           </div>
 
           <Button type="submit" disabled={loading} className="w-full">
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Call Depix API
+            {loading ? "Processing Your Deposit..." : "🚀 Generate PIX Payment"}
           </Button>
         </form>
 
         {(depositId || isEditingDepositId) && (
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Deposit ID:</span>
+              <span className="text-sm font-medium">📋 Transaction ID:</span>
               {isEditingDepositId ? (
                 <div className="flex items-center gap-2 flex-1">
                   <Input
                     value={customDepositId}
                     onChange={(e) => setCustomDepositId(e.target.value)}
-                    placeholder="Enter deposit ID"
+                    placeholder="Enter your transaction ID"
                     className="flex-1"
                   />
                   <Button size="sm" variant="outline" onClick={handleSaveDepositId} disabled={!customDepositId.trim()}>
@@ -197,7 +197,7 @@ export function DepixIntegration() {
               className="w-full bg-transparent"
             >
               {statusLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Check Deposit Status
+              {statusLoading ? "Checking..." : "🔍 Check Payment Status"}
             </Button>
           </div>
         )}
@@ -205,21 +205,20 @@ export function DepixIntegration() {
         {!depositId && !isEditingDepositId && (
           <div className="space-y-2">
             <Button onClick={() => setIsEditingDepositId(true)} variant="outline" className="w-full">
-              <Edit2 className="mr-2 h-4 w-4" />
-              Enter Custom Deposit ID
+              <Edit2 className="mr-2 h-4 w-4" />📝 Track Existing Transaction
             </Button>
           </div>
         )}
 
         {error && (
           <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>❌ Oops! Something went wrong: {error}</AlertDescription>
           </Alert>
         )}
 
         {statusError && (
           <Alert variant="destructive">
-            <AlertDescription>Status Check Error: {statusError}</AlertDescription>
+            <AlertDescription>❌ Unable to check payment status: {statusError}</AlertDescription>
           </Alert>
         )}
 
@@ -227,21 +226,24 @@ export function DepixIntegration() {
           <>
             {response.data.response?.qrImageUrl && (
               <div>
-                <label className="text-sm font-medium">QR Code Image</label>
+                <label className="text-sm font-medium">📱 Scan to Pay with PIX</label>
                 <Alert className="mt-1">
                   <AlertDescription>
                     <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Open your bank app and scan this QR code to complete your deposit instantly
+                      </p>
                       <div className="flex flex-col items-center space-y-2">
                         <img
                           src={response.data.response.qrImageUrl || "/placeholder.svg"}
-                          alt="Depix QR Code"
+                          alt="PIX QR Code for Payment"
                           className="max-w-xs border rounded"
                           onLoad={() => console.log("QR image loaded successfully")}
                           onError={(e) => {
                             console.error("Failed to load QR image:", response.data.response.qrImageUrl)
                             e.currentTarget.style.display = "none"
                             const errorDiv = document.createElement("div")
-                            errorDiv.textContent = `Failed to load QR image: ${response.data.response.qrImageUrl}`
+                            errorDiv.textContent = `Unable to load payment QR code. Please try again.`
                             errorDiv.className = "text-red-500 text-sm p-2 border border-red-200 rounded"
                             e.currentTarget.parentNode?.appendChild(errorDiv)
                           }}
@@ -255,10 +257,13 @@ export function DepixIntegration() {
 
             {response.data.response?.qrCopyPaste && (
               <div>
-                <label className="text-sm font-medium">QR Copy Paste Code</label>
+                <label className="text-sm font-medium">🔑 PIX Copy & Paste Key</label>
                 <Alert className="mt-1">
                   <AlertDescription>
                     <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Can't scan? Copy this PIX key and paste it in your banking app
+                      </p>
                       <div className="font-mono text-lg p-4 bg-muted rounded border break-all">
                         {response.data.response.qrCopyPaste}
                       </div>
@@ -270,7 +275,7 @@ export function DepixIntegration() {
                             await navigator.clipboard.writeText(response.data.response.qrCopyPaste)
                             const button = document.activeElement as HTMLButtonElement
                             const originalText = button.textContent
-                            button.textContent = "Copied!"
+                            button.textContent = "✅ Copied!"
                             button.disabled = true
                             setTimeout(() => {
                               button.textContent = originalText
@@ -286,7 +291,7 @@ export function DepixIntegration() {
                               document.execCommand("copy")
                               const button = document.activeElement as HTMLButtonElement
                               const originalText = button.textContent
-                              button.textContent = "Copied!"
+                              button.textContent = "✅ Copied!"
                               button.disabled = true
                               setTimeout(() => {
                                 button.textContent = originalText
@@ -294,14 +299,14 @@ export function DepixIntegration() {
                               }, 2000)
                             } catch (fallbackErr) {
                               console.error("Fallback copy failed:", fallbackErr)
-                              alert("Copy failed. Please manually copy the code above.")
+                              alert("Copy failed. Please manually copy the PIX key above.")
                             }
                             document.body.removeChild(textArea)
                           }
                         }}
                         className="w-full"
                       >
-                        Copy Code to Clipboard
+                        📋 Copy PIX Key
                       </Button>
                     </div>
                   </AlertDescription>
@@ -315,7 +320,7 @@ export function DepixIntegration() {
           <>
             {statusResponse.data?.response?.status && (
               <div>
-                <label className="text-sm font-medium">Deposit Status</label>
+                <label className="text-sm font-medium">💳 Payment Status</label>
                 <Alert
                   className={`mt-1 ${
                     statusResponse.data.response.status === "depix_sent"
@@ -329,14 +334,18 @@ export function DepixIntegration() {
                     <div className="space-y-2">
                       {statusResponse.data.response.status === "depix_sent" && (
                         <div className="flex items-center space-x-2">
-                          <div className="text-green-600 font-medium">✅ Success!</div>
-                          <div className="text-green-700">Your deposit has been sent successfully via Depix.</div>
+                          <div className="text-green-600 font-medium">🎉 Payment Completed!</div>
+                          <div className="text-green-700">
+                            Your deposit has been successfully processed and added to your account.
+                          </div>
                         </div>
                       )}
                       {statusResponse.data.response.status === "pending" && (
                         <div className="flex items-center space-x-2">
-                          <div className="text-yellow-600 font-medium">⏳ Waiting</div>
-                          <div className="text-yellow-700">Your deposit is pending and waiting to be processed.</div>
+                          <div className="text-yellow-600 font-medium">⏳ Processing Payment</div>
+                          <div className="text-yellow-700">
+                            Your deposit is being processed. This usually takes a few minutes.
+                          </div>
                         </div>
                       )}
                       {statusResponse.data.response.status !== "depix_sent" &&
