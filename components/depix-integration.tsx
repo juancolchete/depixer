@@ -5,12 +5,12 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Edit2, Check, X } from "lucide-react"
 
 export function DepixIntegration() {
-  const [amountInReais, setAmountInReais] = useState(1.0)
+  const [amountInReais, setAmountInReais] = useState("")
   const [loading, setLoading] = useState(false)
   const [statusLoading, setStatusLoading] = useState(false)
   const [response, setResponse] = useState<any>(null)
@@ -21,7 +21,7 @@ export function DepixIntegration() {
   const [isEditingDepositId, setIsEditingDepositId] = useState(false)
   const [customDepositId, setCustomDepositId] = useState<string>("")
 
-  const requestBody = { amountInCents: Math.round(amountInReais * 100) }
+  const requestBody = { amountInCents: Math.round((Number(amountInReais) || 0) * 100) }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,7 +38,7 @@ export function DepixIntegration() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ amountInCents: Math.round(amountInReais * 100) }),
+        body: JSON.stringify({ amountInCents: Math.round((Number(amountInReais) || 0) * 100) }),
       })
 
       const responseText = await res.text()
@@ -137,7 +137,9 @@ export function DepixIntegration() {
     <Card className="w-full max-w-2xl">
       <CardHeader>
         <CardTitle>DePix Deposit</CardTitle>
-        <CardDescription>Buy DePix quickly and securely with PIX payments</CardDescription>
+        <p className="text-sm text-muted-foreground">
+          Deposit DePix quickly and securely using PIX payments. Enter your amount and get instant payment instructions.
+        </p>
       </CardHeader>
       <CardContent className="space-y-4">
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -150,7 +152,7 @@ export function DepixIntegration() {
               type="number"
               step="0.01"
               value={amountInReais}
-              onChange={(e) => setAmountInReais(Number(e.target.value))}
+              onChange={(e) => setAmountInReais(e.target.value)}
               placeholder="10.00"
               min="0.01"
             />
